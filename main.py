@@ -1,9 +1,8 @@
 import os
 import requests
-from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+from flask import Flask, request
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import Application, MessageHandler, filters
 from google import genai
 
 TELEGRAM_TOKEN = "9152846224:AAHGRMDWj-T7106b5_YwBHAhYIycyY0a-Y"
@@ -11,10 +10,10 @@ GEMINI_KEY = "AQ.Ab8RN6JyOIYAK1ldpFR661Z9-p0pTaHxnlWHOsoEL0I99wPYWQ"
 RENDER_URL = "https://jarvis-bot-2vnm.onrender.com"
 CALLMEBOT_USERNAME = "KanavBhatia"
 
-# Initialize Gemini async client
-genai_client = genai.Client(api_key=GEMINI_KEY)
+client = genai.Client(api_key=GEMINI_KEY)
+flask_app = Flask(__name__)
 
-# Initialize Telegram App
+# Setup Telegram Application without running an internal loop
 telegram_app = Application.builder().token(TELEGRAM_TOKEN).updater(None).build()
 
 def ring_phone(reason: str):
@@ -37,7 +36,7 @@ async def reply_handler(update: Update, context):
         return
 
     try:
-        response = await genai_client.aio.models.generate_content(
+        response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=f"You are JARVIS, a personal AI assistant. Be direct, helpful, and concise. User: {user_msg}"
         )
@@ -48,31 +47,30 @@ async def reply_handler(update: Update, context):
 
 telegram_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, reply_handler))
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Set webhook on startup
-    webhook_url = f"{RENDER_URL}/{TELEGRAM_TOKEN}"
-    await telegram_app.bot.set_webhook(url=webhook_url)
-    async with telegram_app:
-        await telegram_app.start()
-        print("JARVIS Webhook set & ready!")
-        yield
-        await telegram_app.stop()
+@flask_app.route('/')
+def home():
+    return "JARVIS Webhook Server is Live!"
 
-app = FastAPI(lifespan=lifespan)
-
-@app.get("/")
-async def home():
-    return {"status": "JARVIS is online 24/7!"}
-
-@app.post(f"/{TELEGRAM_TOKEN}")
-async def webhook(request: Request):
-    data = await request.json()
-    update = Update.de_json(data, telegram_app.bot)
-    await telegram_app.process_update(update)
-    return "OK"
+@flask_app.route(f"/{TELEGRAM_TOKEN}", methods=["POST"])
+def webhook():
+    import asyncio
+    json_data = request.get_json(force=True)
+    update = Update.de_json(json_data, telegram_app.bot)
+    
+    async def process():
+        await telegram_app.initialize()
+        await telegram_app.process_update(update)
+        
+    asyncio.run(process())
+    return "OK", 200
 
 if __name__ == "__main__":
-    import uvicorn
+    # Automatically register the webhook URL with Telegram
+    set_webhook_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={RENDER_URL}/{TELEGRAM_TOKEN}"
+    try:
+        requests.get(set_webhook_url, timeout=10)
+    except Exception as e:
+        print("Webhook registration error:", e)
+
     port = int(os.environ.get("PORT", 10000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    flask_app.run(host="0.0.0.0", port=port)
