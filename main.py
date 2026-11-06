@@ -6,14 +6,14 @@ import google.generativeai as genai
 
 # --- CREDENTIALS ---
 GEMINI_KEY = "AQ.Ab8RN6JyOIYAK1ldpFR661Z9-p0pTaHxnlWHOsoEL0I99wPYWQ"
-TELEGRAM_TOKEN = "9152846224:AAHGRMDWj-T7106b5_YwBHAhYIycyY0a-Y"
+# THIS IS THE CORRECT TOKEN FROM YOUR SCREENSHOT:
+TELEGRAM_TOKEN = "9152846224:AAHGRM0Wj-T7106b5_YwBHAhYIycZyY0a-Y" 
 CALLMEBOT_USERNAME = "KanavBhatia"
 
 # --- INITIALIZE ---
 genai.configure(api_key=GEMINI_KEY)
 model = genai.GenerativeModel("gemini-1.5-flash")
 
-# 建立 Application
 application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
 def ring_phone(alert_reason):
@@ -43,19 +43,13 @@ async def reply_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print("Gemini error:", e)
         await context.bot.send_message(chat_id=chat_id, text="Sorry, I ran into an error.")
 
-# 註冊處理器
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, reply_handler))
 
-# --- 啟動順序 (重要！不用 Flask 了) ---
 if __name__ == "__main__":
-    # 1. 你的 Render 網址
     RENDER_URL = "https://jarvis-bot-2vnm.onrender.com"
-    # 2. 告訴 Telegram 把訊息推到這個網址
     webhook_url = f"{RENDER_URL}/{TELEGRAM_TOKEN}"
-    
     port = int(os.environ.get("PORT", 10000))
     
-    # 3. 使用內建的 Webhook 伺服器啟動 (它會自己處理好異步問題)
     print(f"Starting webhook server on port {port}...")
     application.run_webhook(
         listen="0.0.0.0",
@@ -63,4 +57,3 @@ if __name__ == "__main__":
         url_path=TELEGRAM_TOKEN,
         webhook_url=webhook_url
     )
-    
