@@ -5,8 +5,8 @@ from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filte
 import google.generativeai as genai
 
 # --- CREDENTIALS ---
+# Make sure these are exactly correct!
 GEMINI_KEY = "AQ.Ab8RN6JyOIYAK1ldpFR661Z9-p0pTaHxnlWHOsoEL0I99wPYWQ"
-# THIS IS THE CORRECT TOKEN FROM YOUR SCREENSHOT:
 TELEGRAM_TOKEN = "9152846224:AAHGRM0Wj-T7106b5_YwBHAhYIycZyY0a-Y" 
 CALLMEBOT_USERNAME = "KanavBhatia"
 
@@ -46,6 +46,7 @@ async def reply_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, reply_handler))
 
 if __name__ == "__main__":
+    # Force Render URL
     RENDER_URL = "https://jarvis-bot-2vnm.onrender.com"
     webhook_url = f"{RENDER_URL}/{TELEGRAM_TOKEN}"
     port = int(os.environ.get("PORT", 10000))
