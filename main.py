@@ -9,7 +9,6 @@ GEMINI_KEY = "AQ.Ab8RN6JyOIYAK1ldpFR661Z9-p0pTaHxnlWHOsoEL0I99wPYWQ"
 RENDER_URL = "https://jarvis-bot-2vnm.onrender.com"
 CALLMEBOT_USERNAME = "KanavBhatia"
 
-# Initialize Gemini
 genai.configure(api_key=GEMINI_KEY)
 model = genai.GenerativeModel("gemini-1.5-flash")
 
@@ -75,3 +74,4 @@ def run():
 
 if __name__ == "__main__":
     run()
+    
